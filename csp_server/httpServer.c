@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
 	char uri[200] = {""};
 	char discard1[50];
 	char discard2[50];
-	
+
 	if (argc != 2) // Test for correct number of arguments
 		DieWithUserMessage("Parameter(s)", "<Server Port>");
 
@@ -36,7 +36,9 @@ int main(int argc, char *argv[]) {
 		DieWithSystemMessage("socket() failed");
 
 	// Construct local address structure
-	struct sockaddr_in servAddr;                  // Local address
+	socklen_t clntAddrLen; // New variable to hold length of address struct
+	struct sockaddr_in servAddr, cliaddr;         // Local address and new address structure
+	char clntName[INET_ADDRSTRLEN];		      // Buffer to hold the client address
 	memset(&servAddr, 0, sizeof(servAddr));       // Zero out structure
 	servAddr.sin_family = AF_INET;                // IPv4 address family
 	servAddr.sin_addr.s_addr = htonl(INADDR_ANY); // Any incoming interface
@@ -51,9 +53,13 @@ int main(int argc, char *argv[]) {
 		DieWithSystemMessage("listen() failed");
 
 	for (;;) { // Infinite for loop; runs forever
-    
+   		
+		// clntAddrLen is called a value-result argument
+		clntAddrLen = sizeof(cliaddr); 
     		// Wait for a client to connect
-    		int clntSock = accept(servSock, (struct sockaddr *) NULL, NULL);
+    		int clntSock = accept(servSock, (struct sockaddr *) &cliaddr, &clntAddrLen);
+		// Print out client address
+		printf("connection from %s, port %d\n", inet_ntop(AF_INET, &cliaddr.sin_addr, clntName, sizeof(clntName)), ntohs(cliaddr.sin_port));
     		
 		if (clntSock < 0)
       			DieWithSystemMessage("accept() failed");
